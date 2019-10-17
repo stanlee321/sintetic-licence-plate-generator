@@ -21,6 +21,9 @@ class PlateGenerator:
         self.OUTPUT_SHAPE = (240, 420)
         self.CHARS = common.CHARS + " "
 
+        self.position_char_list = []
+        self.font = cv2.FONT_HERSHEY_SIMPLEX
+
     def load_fonts(self, folder_path):
         """
         Load font 
@@ -202,7 +205,9 @@ class PlateGenerator:
         """
         h_padding = random.uniform(0.1, 0.15) * font_height
         v_padding = random.uniform(0.0, 0.0) * font_height
+
         spacing = font_height * random.uniform(-0.05, 0.05)
+
         radius = 1 + int(font_height * 0.1 * random.random())
 
         code = self.generate_code()
@@ -212,29 +217,55 @@ class PlateGenerator:
 
         out_shape = (int(font_height + v_padding * 1),
                     int(text_width + h_padding * 2))
-
+    
         text_color, plate_color = self.pick_colors()
         text_color = 0
 
         text_mask = np.zeros(out_shape)
-        
+        print(f"text mask shape {text_mask.shape}")
+
         x = h_padding
         y = v_padding
         
         for c in code:
+
             # Get image
             char_im = char_ims[c]
-
+            
+            print(f"CHARIMAGE SHAPE {char_im.shape}")
             
             ix, iy = int(x), int(y)
-            text_mask[iy:iy + char_im.shape[0], ix:ix + char_im.shape[1]] = char_im
-            x += char_im.shape[1] + (spacing)
+            deltaY = iy + char_im.shape[0]
+            deltaX = ix + char_im.shape[1]
+            # print(".............")
+            # print(f"IY is {iy}")
+            # print(f"IX is {ix}")
+            # print(f"DELTA Y {deltaY}")
+            # print(f"DELTA X {deltaX}")
+            
+            p1 = [ix, iy]
+            p2 = [deltaX, deltaY]
+
+            # print(f"P1 {p1}, P2 {p2}")
+
+            char_pos  = {c : [p1, p2] }
+
+            self.position_char_list.append(char_pos)
+
+            text_mask[p1[1]: p2[1], p1[0]:p2[0]] = char_im
+
+            update_x_position = char_im.shape[1] + spacing
+
+            x += update_x_position
 
         plate = (np.ones(out_shape) * plate_color * (1. - text_mask) +
                 np.ones(out_shape) * text_color * text_mask)
-        cv2.imwrite("super/super.jpg", plate*255.)
-
-        return plate, self.rounded_rect(out_shape, radius), code.replace(" ", "")
+        
+        # Return numpy array and String with plate code
+        rounded_rect, code_string = self.rounded_rect(out_shape, radius), code.replace(" ", "")
+        # cv2.imwrite("super/super.jpg", plate*255.)
+        
+        return plate, rounded_rect, code_string,
 
     def generate_bg(self):
 
@@ -271,27 +302,54 @@ class PlateGenerator:
 
         bg = self.generate_bg()
 
-        plate, plate_mask, code = self.generate_plate(self.FONT_HEIGHT, char_ims)
+        plate_or, plate_mask, code = self.generate_plate(self.FONT_HEIGHT, char_ims)
         
         M, out_of_bounds = self.make_affine_transform(
-                                from_shape=plate.shape,
+                                from_shape=plate_or.shape,
                                 to_shape=bg.shape,
                                 min_scale=0.9,
                                 max_scale=1.0,
                                 rotation_variation=0.1,
                                 scale_variation=0.0,
                                 translation_variation=0.0)
+        print(f"M SHAPE {M.shape}")
+        print(M)
+        plate = cv2.warpAffine(plate_or, M, (bg.shape[1], bg.shape[0]))
+        cv2.imwrite("super/plate.jpg", plate*255.)
 
-        plate = cv2.warpAffine(plate, M, (bg.shape[1], bg.shape[0]))
+        print(f"WAR APIINE PLATE plate shape {plate.shape}")
+
         plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
+        print(f"WAR APIINE PLATE plate_mask shape {plate.shape}")
+        cv2.imwrite("super/plate_mask.jpg", plate_mask*255.)
 
         out = plate * plate_mask + bg * (1.0 - plate_mask)
 
-        out = cv2.resize(out, (self.OUTPUT_SHAPE[1]+50, self.OUTPUT_SHAPE[0]))
+        ## out = cv2.resize(out, (self.OUTPUT_SHAPE[1]+50, self.OUTPUT_SHAPE[0]))
 
         out += np.random.normal(scale=0.05, size=out.shape)
         out = np.clip(out, 0.0, 1.)
+        
+        w = out.shape[1]
+        h = out.shape[0]
 
+        print(f"W {w} AND H {h}")
+        plate_y_shape, plate_x_shape = plate_or.shape
+        print(f"PLATE X {plate_x_shape} Y SHAPE {plate_y_shape}" )
+
+        for d in  self.position_char_list:
+            for k,v in d.items():
+                p1, p2 = v
+
+                print(f"P1 {p1} and P2 {p2}")
+                new_pos_1 =(p1[0] + (w - plate_x_shape ), p1[1] + (plate_y_shape)) 
+                new_pos_2 =(p2[0] + (w - plate_x_shape ), p2[1] + (plate_y_shape))
+
+                print(f"P1_new {new_pos_1} and P2_new {new_pos_2}")
+                # print(new_pos_1, new_pos_2)
+                # # cv2.putText(out, k , tuple(p2), self.font, 4,(0,255,255),2, cv2.LINE_AA)
+                cv2.rectangle(out, new_pos_1, new_pos_2, (0,255,255), 2)
+                
         return out, code, not out_of_bounds
 
     def generate_ims(self):
