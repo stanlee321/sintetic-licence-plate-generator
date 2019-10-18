@@ -18,6 +18,31 @@ from skimage import data
 import common
 
 class PlateGenerator:
+
+    """Generate plates for  `object detection in the letters`.
+    
+    The aspect ratio is maintained. The longer side is resized to the input 
+    size of the network, while the remaining space on the shorter side is filled 
+    with black color. **This should be the last transform**
+    
+    
+    Parameters
+    ----------
+    inp_dim : tuple(int)
+        tuple containing the size to which the image will be resized.
+        
+    Returns
+    -------
+    
+    numpy.ndaaray
+        Sheared image in the numpy format of shape `HxWxC`
+    
+    numpy.ndarray
+        Resized bounding box co-ordinates of the format `n x 4` where n is 
+        number of bounding boxes and 4 represents `x1,y1,x2,y2` of the box
+        
+    """
+
     def __init__(self, debug=False):
         self.FONT_DIR = "./fonts"
         self.BACKGROUNDS_PATH =  "backgrounds/bw.jpg"
