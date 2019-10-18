@@ -402,7 +402,7 @@ if __name__ == "__main__":
     except:
         print('directory already exist...')
     
-    plate_generator = PlateGenerator()
+    plate_generator = PlateGenerator(debug=True)
 
     im_gen = itertools.islice(plate_generator.generate_ims(), int(sys.argv[1]))
 

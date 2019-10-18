@@ -1,0 +1,92 @@
+<annotation>
+    <folder>out</folder>
+    <filename>000002_0546TJB.png</filename>
+    <path>/home/stanlee321/Desktop/DL/DL_plate/create_data_sets_II_plates_creation/out/000002_0546TJB.png</path>
+    <source>
+        <database>Unknown</database>
+    </source>
+    <size>
+        <width>240</width>
+        <height>120</height>
+        <depth>3</depth>
+    </size>
+    <segmented>0</segmented>
+    <object>
+        <name>0</name>
+        <pose>Unspecified</pose>
+        <truncated>0</truncated>
+        <difficult>0</difficult>
+        <bndbox>
+            <xmin>8</xmin>
+            <ymin>41</ymin>
+            <xmax>39</xmax>
+            <ymax>108</ymax>
+        </bndbox>
+    </object>    <object>
+        <name>5</name>
+        <pose>Unspecified</pose>
+        <truncated>0</truncated>
+        <difficult>0</difficult>
+        <bndbox>
+            <xmin>41</xmin>
+            <ymin>41</ymin>
+            <xmax>72</xmax>
+            <ymax>108</ymax>
+        </bndbox>
+    </object>    <object>
+        <name>4</name>
+        <pose>Unspecified</pose>
+        <truncated>0</truncated>
+        <difficult>0</difficult>
+        <bndbox>
+            <xmin>73</xmin>
+            <ymin>41</ymin>
+            <xmax>104</xmax>
+            <ymax>108</ymax>
+        </bndbox>
+    </object>    <object>
+        <name>6</name>
+        <pose>Unspecified</pose>
+        <truncated>0</truncated>
+        <difficult>0</difficult>
+        <bndbox>
+            <xmin>106</xmin>
+            <ymin>41</ymin>
+            <xmax>136</xmax>
+            <ymax>108</ymax>
+        </bndbox>
+    </object>    <object>
+        <name>T</name>
+        <pose>Unspecified</pose>
+        <truncated>0</truncated>
+        <difficult>0</difficult>
+        <bndbox>
+            <xmin>137</xmin>
+            <ymin>41</ymin>
+            <xmax>167</xmax>
+            <ymax>108</ymax>
+        </bndbox>
+    </object>    <object>
+        <name>J</name>
+        <pose>Unspecified</pose>
+        <truncated>0</truncated>
+        <difficult>0</difficult>
+        <bndbox>
+            <xmin>169</xmin>
+            <ymin>41</ymin>
+            <xmax>200</xmax>
+            <ymax>108</ymax>
+        </bndbox>
+    </object>    <object>
+        <name>B</name>
+        <pose>Unspecified</pose>
+        <truncated>0</truncated>
+        <difficult>0</difficult>
+        <bndbox>
+            <xmin>202</xmin>
+            <ymin>41</ymin>
+            <xmax>232</xmax>
+            <ymax>108</ymax>
+        </bndbox>
+    </object>
+</annotation>
