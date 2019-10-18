@@ -18,7 +18,7 @@ from skimage import data
 import common
 
 class PlateGenerator:
-    def __init__(self):
+    def __init__(self, debug=False):
         self.FONT_DIR = "./fonts"
         self.BACKGROUNDS_PATH =  "backgrounds/bw.jpg"
         self.FONT_HEIGHT = 64 # Pixel size to which the chars are resized
@@ -28,6 +28,8 @@ class PlateGenerator:
 
         self.position_char_list = []
         self.font = cv2.FONT_HERSHEY_SIMPLEX
+        
+        self.debug = debug
 
     def load_fonts(self, folder_path):
         """
@@ -372,10 +374,10 @@ class PlateGenerator:
                 pos = {k: [new_pos_1, new_pos_2] }
                 new_positions.append(pos)
                 
-                # print(f"P1_new {new_pos_1} and P2_new {new_pos_2}")
-                # print(new_pos_1, new_pos_2)
-                cv2.putText(out, k , tuple(new_pos_1), self.font, 0.5,(0,255,255),2, cv2.LINE_AA)
-                cv2.rectangle(out, new_pos_1, new_pos_2, (0,255,255), 2)
+
+                if self.debug:
+                    cv2.putText(out, k , tuple(new_pos_1), self.font, 0.5,(0,255,255), 2, cv2.LINE_AA)
+                    cv2.rectangle(out, new_pos_1, new_pos_2, (0,255,255), 2)
 
         return out, code, new_positions
 
