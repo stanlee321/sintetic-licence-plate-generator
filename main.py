@@ -11,6 +11,10 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 
+from pascal_voc_writer import Writer
+from skimage import color
+from skimage import data
+
 import common
 
 class PlateGenerator:
@@ -18,7 +22,8 @@ class PlateGenerator:
         self.FONT_DIR = "./fonts"
         self.BACKGROUNDS_PATH =  "backgrounds/bw.jpg"
         self.FONT_HEIGHT = 64 # Pixel size to which the chars are resized
-        self.OUTPUT_SHAPE = (240, 420)
+        # self.OUTPUT_SHAPE = (240, 420)
+        self.OUTPUT_SHAPE = (120, 240)
         self.CHARS = common.CHARS + " "
 
         self.position_char_list = []
@@ -258,9 +263,24 @@ class PlateGenerator:
 
             x += update_x_position
 
+                
         plate = (np.ones(out_shape) * plate_color * (1. - text_mask) +
                 np.ones(out_shape) * text_color * text_mask)
         
+        # for d in  self.position_char_list:
+        #     for k,v in d.items():
+        #         p1, p2 = v
+
+        #         # print(f"P1 {p1} and P2 {p2}")
+        #         # new_pos_1 =(p1[0] + (w - plate_x_shape ), p1[1] + (plate_y_shape)) 
+        #         # new_pos_2 =(p2[0] + (w - plate_x_shape ), p2[1] + (plate_y_shape))
+
+        #         # print(f"P1_new {new_pos_1} and P2_new {new_pos_2}")
+        #         # print(new_pos_1, new_pos_2)
+        #         # # cv2.putText(out, k , tuple(p2), self.font, 4,(0,255,255),2, cv2.LINE_AA)
+        #         cv2.rectangle(plate, tuple(p1), tuple(p2), (0,255,255), 2)
+
+
         # Return numpy array and String with plate code
         rounded_rect, code_string = self.rounded_rect(out_shape, radius), code.replace(" ", "")
         # cv2.imwrite("super/super.jpg", plate*255.)
@@ -272,6 +292,7 @@ class PlateGenerator:
         fname = self.BACKGROUNDS_PATH
 
         bg = (cv2.imread(fname, 0)) / 255.
+        bg = cv2.resize(bg, (self.OUTPUT_SHAPE[1], self.OUTPUT_SHAPE[0]))
 
         # if (bg.shape[1] >= self.OUTPUT_SHAPE[1] and
         #     bg.shape[0] >= self.OUTPUT_SHAPE[0]):
@@ -312,16 +333,16 @@ class PlateGenerator:
                                 rotation_variation=0.1,
                                 scale_variation=0.0,
                                 translation_variation=0.0)
-        print(f"M SHAPE {M.shape}")
-        print(M)
+        # print(f"M SHAPE {M.shape}")
+        # print(M)
         plate = cv2.warpAffine(plate_or, M, (bg.shape[1], bg.shape[0]))
-        cv2.imwrite("super/plate.jpg", plate*255.)
+        # cv2.imwrite("super/plate.jpg", plate*255.)
 
-        print(f"WAR APIINE PLATE plate shape {plate.shape}")
+        # print(f"WAR APIINE PLATE plate shape {plate.shape}")
 
         plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
-        print(f"WAR APIINE PLATE plate_mask shape {plate.shape}")
-        cv2.imwrite("super/plate_mask.jpg", plate_mask*255.)
+        # print(f"WAR APIINE PLATE plate_mask shape {plate.shape}")
+        # cv2.imwrite("super/plate_mask.jpg", plate_mask*255.)
 
         out = plate * plate_mask + bg * (1.0 - plate_mask)
 
@@ -333,24 +354,30 @@ class PlateGenerator:
         w = out.shape[1]
         h = out.shape[0]
 
-        print(f"W {w} AND H {h}")
+        #print(f"W {w} AND H {h}")
         plate_y_shape, plate_x_shape = plate_or.shape
-        print(f"PLATE X {plate_x_shape} Y SHAPE {plate_y_shape}" )
-
+        #print(f"PLATE X {plate_x_shape} Y SHAPE {plate_y_shape}" )
+        
+        new_positions = []
+        
         for d in  self.position_char_list:
+
             for k,v in d.items():
                 p1, p2 = v
 
-                print(f"P1 {p1} and P2 {p2}")
-                new_pos_1 =(p1[0] + (w - plate_x_shape ), p1[1] + (plate_y_shape)) 
-                new_pos_2 =(p2[0] + (w - plate_x_shape ), p2[1] + (plate_y_shape))
-
-                print(f"P1_new {new_pos_1} and P2_new {new_pos_2}")
-                # print(new_pos_1, new_pos_2)
-                # # cv2.putText(out, k , tuple(p2), self.font, 4,(0,255,255),2, cv2.LINE_AA)
-                cv2.rectangle(out, new_pos_1, new_pos_2, (0,255,255), 2)
+                # print(f"P1 {p1} and P2 {p2}")
+                new_pos_1 =(int((w / plate_x_shape) * p1[0]), int((h/plate_y_shape) * 22.3))
+                new_pos_2 =(int((w / plate_x_shape) * p2[0]), int((h/plate_y_shape) * p2[1] * 0.9))
                 
-        return out, code, not out_of_bounds
+                pos = {k: [new_pos_1, new_pos_2] }
+                new_positions.append(pos)
+                
+                # print(f"P1_new {new_pos_1} and P2_new {new_pos_2}")
+                # print(new_pos_1, new_pos_2)
+                cv2.putText(out, k , tuple(new_pos_1), self.font, 0.5,(0,255,255),2, cv2.LINE_AA)
+                cv2.rectangle(out, new_pos_1, new_pos_2, (0,255,255), 2)
+
+        return out, code, new_positions
 
     def generate_ims(self):
         """
@@ -377,10 +404,34 @@ if __name__ == "__main__":
 
     im_gen = itertools.islice(plate_generator.generate_ims(), int(sys.argv[1]))
 
-    for img_idx, (im, plate, p) in enumerate(im_gen):
-        fname = "{}/00000{:0d}_{}_{}.png".format(OUTPUT_FOLDER,
+    for img_idx, (im, plate, pos) in enumerate(im_gen):
+        fname = "{}/00000{:0d}_{}.png".format(OUTPUT_FOLDER,
                                                 img_idx,
-                                                plate,
-                                                "1" if p else "0")
+                                                plate)
+        fname_xml = "{}/00000{:0d}_{}.xml".format(OUTPUT_FOLDER,
+                                        img_idx,
+                                        plate)
+                                                                           
         print (fname)
-        cv2.imwrite(fname, im * 255.)
+        # Writer(path, width, height)
+        writer = Writer(fname, plate_generator.OUTPUT_SHAPE[1],
+                                plate_generator.OUTPUT_SHAPE[0])
+        for p in pos:
+            for k,v in p.items():
+                p1, p2 = v
+
+                xmin = p1[0]
+                ymin = p1[1]
+
+                xmax = p2[0]
+                ymax = p2[1]
+            # ::addObject(name, xmin, ymin, xmax, ymax)
+            writer.addObject(k, xmin, ymin, xmax, ymax)
+
+        writer.save(fname_xml)
+        test_image = color.gray2rgb( im * 255.)
+        
+        cv2.imwrite(fname,test_image)
+
+        # Reset character list for the next eelement.
+        plate_generator.position_char_list = []
